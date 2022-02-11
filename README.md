@@ -21,7 +21,7 @@ compatible) http://docs.python.org/2/library/socketserver.html
 Reference / Collaboration
 =========================
 Reference Code:
-- https://github.com/jihoonog/CMPUT404-assignment-webserver/blob/master/server.py
+- https://github.com/jihoonog/CMPUT404-assignment-web-client/blob/master/httpclient.py
 
 Reference Documentation:
 - https://docs.python.org/3/library/urllib.parse.html
