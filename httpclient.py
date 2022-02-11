@@ -1,3 +1,5 @@
+# Reference Code: https://github.com/jihoonog/CMPUT404-assignment-web-client/blob/master/httpclient.py
+
 #!/usr/bin/env python3
 # coding: utf-8
 # Copyright 2016 Abram Hindle, https://github.com/tywtyw2002, and https://github.com/treedust
@@ -22,7 +24,7 @@ import sys
 import socket
 import re
 # you may use urllib to encode data appropriately
-import urllib.parse
+from urllib.parse import urlparse, urlencode
 
 def help():
     print("httpclient.py [GET/POST] [URL]\n")
@@ -33,7 +35,22 @@ class HTTPResponse(object):
         self.body = body
 
 class HTTPClient(object):
-    #def get_host_port(self,url):
+    def parse_url(self,url):
+        parsed_url = urlparse(url)
+
+        host = parsed_url.hostname
+
+        if parsed_url.port:
+            port = parsed_url.port
+        else:
+            port = 80
+
+        if parsed_url.path:
+            path = parsed_url.path
+        else:
+            path = '/'
+        
+        return host, port, path
 
     def connect(self, host, port):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -41,13 +58,16 @@ class HTTPClient(object):
         return None
 
     def get_code(self, data):
-        return None
+        code = int(data.split()[1])
+        return code
 
     def get_headers(self,data):
-        return None
+        header = data.split('\r\n\r\n')[0]
+        return header
 
     def get_body(self, data):
-        return None
+        body = data.split('\r\n\r\n')[1]
+        return body
     
     def sendall(self, data):
         self.socket.sendall(data.encode('utf-8'))
@@ -70,11 +90,87 @@ class HTTPClient(object):
     def GET(self, url, args=None):
         code = 500
         body = ""
+
+        host, port, path = self.parse_url(url)
+        self.connect(host, port)
+
+        if args:
+            body = urlencode(args)
+
+        request_data = f'GET {path} HTTP/1.1\r\n'
+        request_data += f'Host: {host}:{port}\r\n'
+        request_data += "User-Agent: Sandip's Web Client\r\n"
+        if len(body) == 0:
+            request_data += 'Content-Length: 0\r\n'
+        else:
+            request_data += f'Content-Length: {len(body)}\r\n'
+            request_data += 'Content-Type: application/x-www-form-urlencoded\r\n'
+        request_data += 'Connection:close\r\n\r\n'
+        request_data += body
+
+        self.sendall(request_data)
+
+        response_data = self.recvall(self.socket)
+        self.close()
+
+        print('**********[GET] request data**********')
+        print('*****************START****************')
+        print(request_data)
+        print('******************END*****************')
+        print()
+        print('**********[GET] response data*********')
+        print('*****************START****************')
+        print(response_data)
+        print('******************END*****************')
+        print()
+
+        header = self.get_headers(response_data)
+        code = self.get_code(header)
+        body = self.get_body(response_data)
+
         return HTTPResponse(code, body)
 
     def POST(self, url, args=None):
         code = 500
         body = ""
+
+        host, port, path = self.parse_url(url)
+        self.connect(host, port)
+
+        if args:
+            body = urlencode(args)
+
+        request_data = f'POST {path} HTTP/1.1\r\n'
+        request_data += f'Host: {host}:{port}\r\n'
+        request_data += "User-Agent: Sandip's Web Client\r\n"
+        if len(body) == 0:
+            request_data += 'Content-Length: 0\r\n'
+        else:
+            request_data += f'Content-Length: {len(body)}\r\n'
+            request_data += 'Content-Type: application/x-www-form-urlencoded\r\n'
+        request_data += 'Connection:close\r\n\r\n'
+        request_data += body
+
+        self.sendall(request_data)
+
+        response_data = self.recvall(self.socket)
+        self.close()
+        
+        print('**********[POST] request data**********')
+        print('*****************START*****************')
+        print(request_data)
+        print('******************END******************')
+        print()
+        print('**********[POST] response data*********')
+        print('*****************START*****************')
+        print(response_data)
+        print('******************END******************')
+        print()
+
+        header = self.get_headers(response_data)
+        code = self.get_code(header)
+        body = self.get_body(response_data)
+
         return HTTPResponse(code, body)
 
     def command(self, url, command="GET", args=None):
